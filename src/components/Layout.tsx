@@ -13,6 +13,11 @@ const Layout = ({ children }: LayoutProps) => {
       <Navbar />
       <main className="flex-grow">{children}</main>
       <Footer />
+      <div className="bg-gray-800 text-center py-2">
+        <a href="/admin/login" className="text-xs text-gray-400 hover:text-white transition-colors">
+          Admin Login
+        </a>
+      </div>
     </div>
   );
 };

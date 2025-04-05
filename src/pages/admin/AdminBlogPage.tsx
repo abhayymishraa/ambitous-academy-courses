@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell 
@@ -22,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 
+// Define our internal BlogPost type for admin management
 interface BlogPost {
   id: string;
   title: string;
@@ -36,7 +36,13 @@ interface BlogPost {
 
 const AdminBlogPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
-  const [posts, setPosts] = useState([...blogPosts]);
+  // Convert imported blog posts to our internal type with guaranteed featured property
+  const initialPosts = blogPosts.map(post => ({
+    ...post,
+    featured: post.featured || false
+  }));
+  
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
   const [isEditing, setIsEditing] = useState(false);
   const [currentPost, setCurrentPost] = useState<BlogPost | null>(null);
   const { toast } = useToast();

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell 
@@ -15,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
@@ -24,7 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 
-interface Course {
+// Define our internal Course type for admin management
+interface AdminCourse {
   id: string;
   title: string;
   description: string;
@@ -34,13 +33,30 @@ interface Course {
   level: string;
   image: string;
   featured: boolean;
+  // Add optional fields that might be present in the imported courses
+  category?: string;
+  rating?: number;
+  students?: number;
+  modules?: Array<{
+    title: string;
+    lessons: Array<{
+      title: string;
+      duration: string;
+    }>;
+  }>;
 }
 
 const AdminCoursesPage = () => {
   const [selectedTab, setSelectedTab] = useState("all");
-  const [coursesData, setCoursesData] = useState([...courses]);
+  // Convert imported courses to our internal type with guaranteed featured property
+  const initialCourses = courses.map(course => ({
+    ...course,
+    featured: course.featured || false
+  }));
+  
+  const [coursesData, setCoursesData] = useState<AdminCourse[]>(initialCourses);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
+  const [currentCourse, setCurrentCourse] = useState<AdminCourse | null>(null);
   const { toast } = useToast();
 
   const filteredCourses = selectedTab === "all" 
@@ -57,7 +73,7 @@ const AdminCoursesPage = () => {
     });
   };
 
-  const handleEditCourse = (course: Course) => {
+  const handleEditCourse = (course: AdminCourse) => {
     setCurrentCourse({...course});
     setIsEditing(true);
   };

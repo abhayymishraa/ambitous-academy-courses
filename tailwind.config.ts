@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -51,6 +52,13 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				// Academy brand colors based on logo
+				academy: {
+					orange: '#F7941D',
+					teal: '#24AC95',
+					red: '#E84137',
+					green: '#4EB94F',
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

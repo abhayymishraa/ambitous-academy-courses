@@ -80,7 +80,7 @@ const ContactPage = () => {
                 </div>
                 <div className="ml-4">
                   <p className="font-medium">Phone</p>
-                  <p className="text-gray-600">+1 (888) 123-4567</p>
+                  <p className="text-gray-600"></p>
                 </div>
               </div>
               
@@ -91,8 +91,8 @@ const ContactPage = () => {
                 <div className="ml-4">
                   <p className="font-medium">Location</p>
                   <p className="text-gray-600">
-                    1234 Legal Avenue, Suite 500<br />
-                    New York, NY 10001
+                    Anand Nagar<br />
+                    Bhopal
                   </p>
                 </div>
               </div>
@@ -186,7 +186,7 @@ const ContactPage = () => {
       
       <div className="w-full h-96 bg-gray-200">
         <iframe 
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d48369.56635316064!2d-74.02828906035558!3d40.74231397816548!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1649791739585!5m2!1sen!2sus" 
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14662.297657227425!2d77.4345!3d23.2250!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397c4330d6599cc1%3A0xe4be1e68d9c77481!2sAnand%20Nagar%2C%20Bhopal%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1649791739587!5m2!1sen!2sin" 
           width="100%" 
           height="100%" 
           style={{ border: 0 }} 

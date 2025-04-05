@@ -2,12 +2,12 @@ import { useState } from "react";
 import { 
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell 
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
-} from "@/components/ui/alert-dialog";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,7 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { courses } from "@/data/courses";
-import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -48,11 +48,17 @@ interface AdminCourse {
 
 const AdminCoursesPage = () => {
   const [selectedTab, setSelectedTab] = useState("all");
+  
   // Convert imported courses to our internal type with guaranteed featured property
-  const initialCourses = courses.map(course => ({
-    ...course,
-    featured: course.featured || false
-  }));
+  // and ensure modules match our expected structure
+  const initialCourses: AdminCourse[] = courses.map(course => {
+    // Create a properly typed version of each course
+    const adminCourse: AdminCourse = {
+      ...course,
+      featured: course.featured || false,
+    };
+    return adminCourse;
+  });
   
   const [coursesData, setCoursesData] = useState<AdminCourse[]>(initialCourses);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,15 +67,18 @@ const AdminCoursesPage = () => {
 
   const filteredCourses = selectedTab === "all" 
     ? coursesData 
-    : coursesData.filter(course => 
-        selectedTab === "featured" ? course.featured : !course.featured
-      );
+    : selectedTab === "featured" 
+      ? coursesData.filter(c => c.featured) 
+      : coursesData.filter(c => !c.featured);
 
-  const handleDelete = (id: string) => {
-    setCoursesData(prev => prev.filter(course => course.id !== id));
-    toast({
-      title: "Course deleted",
-      description: "The course has been successfully deleted.",
+  const handleSaveCourse = () => {
+    if (!currentCourse) return;
+    
+    setCoursesData(prev => {
+      const index = prev.findIndex(c => c.id === currentCourse.id);
+      const newCourses = [...prev];
+      if (index !== -1) newCourses[index] = currentCourse;
+      return newCourses;
     });
   };
 
@@ -78,120 +87,207 @@ const AdminCoursesPage = () => {
     setIsEditing(true);
   };
 
-  const handleAddNewCourse = () => {
-    setCurrentCourse({
-      id: String(Date.now()),
-      title: "",
-      description: "",
-      instructor: "",
-      price: 0,
-      duration: "",
-      level: "Beginner",
-      image: "https://source.unsplash.com/random/?law",
-      featured: false
-    });
-    setIsEditing(true);
-  };
-
-  const handleSaveCourse = () => {
-    if (!currentCourse) return;
-    
-    if (coursesData.find(c => c.id === currentCourse.id)) {
-      // Update existing course
-      setCoursesData(prev => 
-        prev.map(c => c.id === currentCourse.id ? currentCourse : c)
-      );
-      toast({
-        title: "Course updated",
-        description: "The course has been successfully updated.",
-      });
-    } else {
-      // Add new course
-      setCoursesData(prev => [...prev, currentCourse]);
-      toast({
-        title: "Course added",
-        description: "The new course has been successfully added.",
-      });
-    }
-    
+  const closeDialog = () => {
     setIsEditing(false);
     setCurrentCourse(null);
   };
 
+  const handleFieldChange = (field: string, value: string | number | boolean) => {
+    if (!currentCourse) return;
+    setCurrentCourse({
+      ...currentCourse,
+      [field]: value
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    setCoursesData(prev => prev.filter(course => course.id !== id));
+    toast({
+      title: "Course deleted",
+      description: "The course has been permanently removed."
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Courses</h1>
-          <p className="text-gray-500 mt-1">Manage your course offerings.</p>
+          <p className="text-muted-foreground">Manage and organize your courses</p>
         </div>
-        <Button className="flex items-center gap-1" onClick={handleAddNewCourse}>
-          <PlusCircle className="h-4 w-4" />
-          Add Course
+        <Button className="flex items-center gap-2">
+          <PlusCircle className="h-4 w-4" /> Add Course
         </Button>
       </div>
-
+      
       <Tabs defaultValue="all" value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList>
-          <TabsTrigger value="all">All Courses</TabsTrigger>
-          <TabsTrigger value="featured">Featured</TabsTrigger>
-          <TabsTrigger value="regular">Regular</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="featured">Featured</TabsTrigger>
+            <TabsTrigger value="not-featured">Not Featured</TabsTrigger>
+          </TabsList>
+        </div>
         
-        <TabsContent value={selectedTab} className="mt-4">
+        <TabsContent value="all" className="mt-6">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
+                <TableHead className="w-[100px]">Featured</TableHead>
+                <TableHead className="min-w-[150px]">Course</TableHead>
                 <TableHead>Instructor</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Level</TableHead>
+                <TableHead>Duration</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCourses.map((course) => (
                 <TableRow key={course.id}>
-                  <TableCell className="font-medium">{course.title}</TableCell>
+                  <TableCell>
+                    {course.featured ? (
+                      <Badge className="bg-green-100 text-green-800 font-medium">Featured</Badge>
+                    ) : (
+                      <Badge variant="outline" className="font-normal">No</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={course.image} 
+                        alt={course.title} 
+                        className="h-10 w-10 rounded-md object-cover" 
+                      />
+                      <span className="font-medium">{course.title}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>{course.instructor}</TableCell>
                   <TableCell>${course.price}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      course.featured ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                    }`}>
-                      {course.featured ? "Featured" : "Regular"}
-                    </span>
-                  </TableCell>
+                  <TableCell>{course.level}</TableCell>
+                  <TableCell>{course.duration}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEditCourse(course)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditCourse(course)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Course</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this course? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              className="bg-red-600 hover:bg-red-700"
-                              onClick={() => handleDelete(course.id)}
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDelete(course.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+        
+        <TabsContent value="featured" className="mt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[150px]">Course</TableHead>
+                <TableHead>Instructor</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Level</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCourses.map((course) => (
+                <TableRow key={course.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={course.image} 
+                        alt={course.title} 
+                        className="h-10 w-10 rounded-md object-cover" 
+                      />
+                      <span className="font-medium">{course.title}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{course.instructor}</TableCell>
+                  <TableCell>${course.price}</TableCell>
+                  <TableCell>{course.level}</TableCell>
+                  <TableCell>{course.duration}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditCourse(course)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDelete(course.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+        
+        <TabsContent value="not-featured" className="mt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[150px]">Course</TableHead>
+                <TableHead>Instructor</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Level</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCourses.map((course) => (
+                <TableRow key={course.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={course.image} 
+                        alt={course.title} 
+                        className="h-10 w-10 rounded-md object-cover" 
+                      />
+                      <span className="font-medium">{course.title}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{course.instructor}</TableCell>
+                  <TableCell>${course.price}</TableCell>
+                  <TableCell>{course.level}</TableCell>
+                  <TableCell>{course.duration}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditCourse(course)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDelete(course.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -200,103 +296,105 @@ const AdminCoursesPage = () => {
           </Table>
         </TabsContent>
       </Tabs>
-
-      {/* Edit Course Dialog */}
-      <Dialog open={isEditing} onOpenChange={(open) => {
-        if (!open) setIsEditing(false);
-      }}>
-        <DialogContent className="max-w-xl">
+      
+      <Dialog open={isEditing} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{currentCourse?.id ? (coursesData.find(c => c.id === currentCourse.id) ? "Edit Course" : "Add New Course") : "Course"}</DialogTitle>
+            <DialogTitle>Edit Course</DialogTitle>
             <DialogDescription>
-              Fill in the course details below.
+              Make changes to the course information here.
             </DialogDescription>
           </DialogHeader>
           
           {currentCourse && (
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="title" className="text-sm font-medium">Course Title</label>
-                <Input 
-                  id="title" 
-                  value={currentCourse.title} 
-                  onChange={(e) => setCurrentCourse({...currentCourse, title: e.target.value})}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <label htmlFor="description" className="text-sm font-medium">Description</label>
-                <Textarea 
-                  id="description" 
-                  value={currentCourse.description} 
-                  onChange={(e) => setCurrentCourse({...currentCourse, description: e.target.value})}
-                  rows={3}
-                />
-              </div>
-              
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label htmlFor="instructor" className="text-sm font-medium">Instructor</label>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input 
+                    id="title" 
+                    value={currentCourse.title} 
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instructor">Instructor</Label>
                   <Input 
                     id="instructor" 
                     value={currentCourse.instructor} 
-                    onChange={(e) => setCurrentCourse({...currentCourse, instructor: e.target.value})}
+                    onChange={(e) => handleFieldChange('instructor', e.target.value)}
                   />
                 </div>
-                
-                <div className="grid gap-2">
-                  <label htmlFor="price" className="text-sm font-medium">Price ($)</label>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price ($)</Label>
                   <Input 
                     id="price" 
-                    type="number"
-                    value={currentCourse.price} 
-                    onChange={(e) => setCurrentCourse({...currentCourse, price: parseFloat(e.target.value)})}
+                    type="number" 
+                    value={currentCourse.price.toString()} 
+                    onChange={(e) => handleFieldChange('price', parseFloat(e.target.value))}
                   />
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label htmlFor="duration" className="text-sm font-medium">Duration</label>
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duration</Label>
                   <Input 
                     id="duration" 
                     value={currentCourse.duration} 
-                    onChange={(e) => setCurrentCourse({...currentCourse, duration: e.target.value})}
-                    placeholder="e.g., 8 weeks"
+                    onChange={(e) => handleFieldChange('duration', e.target.value)}
                   />
                 </div>
-                
-                <div className="grid gap-2">
-                  <label htmlFor="level" className="text-sm font-medium">Level</label>
-                  <select 
-                    id="level"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={currentCourse.level}
-                    onChange={(e) => setCurrentCourse({...currentCourse, level: e.target.value})}
-                  >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                  </select>
+                <div className="space-y-2">
+                  <Label htmlFor="level">Level</Label>
+                  <Input 
+                    id="level" 
+                    value={currentCourse.level} 
+                    onChange={(e) => handleFieldChange('level', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="image">Image URL</Label>
+                  <Input 
+                    id="image" 
+                    value={currentCourse.image} 
+                    onChange={(e) => handleFieldChange('image', e.target.value)}
+                  />
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="featured" 
-                  checked={currentCourse.featured}
-                  onChange={(e) => setCurrentCourse({...currentCourse, featured: e.target.checked})}
-                  className="h-4 w-4 rounded border-gray-300 text-academy-teal focus:ring-academy-teal"
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  value={currentCourse.description} 
+                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  rows={4}
                 />
-                <label htmlFor="featured" className="text-sm font-medium">Featured Course</label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="featured" 
+                  checked={currentCourse.featured} 
+                  onCheckedChange={(checked) => handleFieldChange('featured', checked)}
+                />
+                <Label htmlFor="featured">Featured Course</Label>
               </div>
             </div>
           )}
-
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-            <Button onClick={handleSaveCourse}>Save Changes</Button>
+            <Button variant="outline" onClick={closeDialog}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              handleSaveCourse();
+              closeDialog();
+              toast({
+                title: "Course updated",
+                description: "Your changes have been saved successfully."
+              });
+            }}>
+              Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

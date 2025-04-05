@@ -84,10 +84,10 @@ const Footer = () => {
                 <span className="text-gray-300">Email: info@ambitiousacademy.com</span>
               </li>
               <li className="flex items-center">
-                <span className="text-gray-300">Phone: +1 (888) 123-4567</span>
+                <span className="text-gray-300">Phone: </span>
               </li>
               <li className="flex items-center">
-                <span className="text-gray-300">1234 Legal Avenue, Suite 500<br />New York, NY 10001</span>
+                <span className="text-gray-300">Anand Nagar<br />Bhopal</span>
               </li>
             </ul>
           </div>
